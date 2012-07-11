@@ -1,0 +1,42 @@
+name:               hap-probe-rrd-writer
+version:            0.1
+license:            BSD3
+license-file:       LICENSE
+copyright:          Copyright (c) 2012 David Joyner
+author:             David Joyner <david@joynerhome.net>
+stability:          experimental
+tested-with:        GHC == 7.4.1
+synopsis:           Home Automation Project - Probe RRD Writer
+cabal-version:      >= 1.8
+homepage:           https://github.com/djoyner/hap-probe-rrd-writer
+build-type:         Simple
+description:        
+    A personal project involving an Arduino-based temperature and power-usage
+    probe, ZigBee wireless interfaces, and Haskell-based backend collector code.
+ 
+source-repository head
+  type:             git
+  location:         git://github.com/djoyner/hap-probe-rrd-writer
+
+Executable hap-probe-rrd-writer
+  hs-source-dirs:   src
+  main-is:          Main.hs
+  
+  ghc-options:      -O2 -Wall -fno-warn-missing-signatures
+
+  build-depends:
+    aeson,
+    attoparsec,
+    base,
+    bindings-librrd,
+    bytestring,
+    cmdargs,
+    conduit,
+    configurator,
+    text,
+    text-format,
+    transformers,
+    unix,
+    unordered-containers,
+    zeromq-haskell
+
