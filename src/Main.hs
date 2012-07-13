@@ -6,11 +6,11 @@ module Main (main) where
 import Control.Monad
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson
+import qualified Data.ByteString.Char8 as B8
 import Data.Conduit
 import qualified Data.Conduit.List as CL
 import qualified Data.HashMap.Strict as HashMap
 import Data.Maybe
-import Data.Monoid (mempty)
 import qualified Data.Text as T
 import System.Console.CmdArgs.Explicit
 import System.Exit
@@ -36,24 +36,21 @@ main = do
   -- Load the config file
   wc <- loadConfig configFile debug
 
+  -- Everything runs in conduit ;)
   runResourceT $ 
-    -- Source JSON-encoded probe data (via ZeroMQ SUB socket)
+    -- Source JSON-encoded probe messages (via ZeroMQ SUB socket)
     (sourceBuffers $ T.unpack $ wcSubAddr wc) $=
-    -- Parse messages, discarding failures
+    -- Print raw messages for debug
+    (CL.mapM $ (\x -> liftIO (when (debug) $ B8.hPutStrLn IO.stderr x) >> return x)) $=
+    -- Parse to values, discarding parse failures
     (CL.concatMap parseMessage) $=
-    -- Decode messages, discarding failures
-    (Main.mapMaybe $ decodeMessage wc) $$
+    -- Resolve to RRD configs, discarding lookup failures
+    (CL.concatMap $ (maybeToList . resolveToRrdConfigs wc)) $$
     -- Sink into the RRD writer
     (CL.mapM_ $ (liftIO . uncurry writeValues))
 
--- Idea borrowed from conduit-0.5.1
-mapMaybe f = NeedInput push close
-  where
-    push  = haveMore (NeedInput push close) (return ()) . maybeToList . f
-    close = mempty
-
-decodeMessage :: WriterConfig -> Value -> Maybe (Integer, [(RrdConfig, Value)])
-decodeMessage wc v = do
+resolveToRrdConfigs :: WriterConfig -> Value -> Maybe (Integer, [(RrdConfig, Value)])
+resolveToRrdConfigs wc v = do
   addr <- getAddress v
   pc <- HashMap.lookup addr $ wcProbes wc
   msg <- getMessage v
@@ -71,7 +68,7 @@ writeValues sync ds = mapM_ (uncurry $ writeValue sync) ds
 
 writeValue :: Integer -> RrdConfig -> Value -> IO ()
 writeValue sync rrd (Number n) = updateRrd rrd sync n
-writeValue _ _ _ = return ()
+writeValue _ _ _               = return ()
 
 -- Command line argument processing
 argsMode :: Mode [(Name, String)]

@@ -42,6 +42,11 @@ librrdCall name f args = do
       | res /= CInt 0 = do err <- c'rrd_get_error
                            errStr <- peekCString err
                            IO.hPutStrLn IO.stderr $ name ++ " failed: " ++ errStr
+                           -- Workaround a librrd issue where the rrd_get_error
+                           -- buffer gets filled with garbage after awhile...
+                           -- this is effectively memset(err, 0, strlen(err))
+                           errLen <- lengthArray0 0 err
+                           pokeArray0 0 err $ replicate errLen 0
       | otherwise     = return ()
 
 filePath = T.unpack . rrdFilename
