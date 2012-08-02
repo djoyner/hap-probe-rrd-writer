@@ -11,8 +11,8 @@ cabal-version:      >= 1.8
 homepage:           https://github.com/djoyner/hap-probe-rrd-writer
 build-type:         Simple
 description:        
-    A personal project involving an Arduino-based temperature and power-usage
-    probe, ZigBee wireless interfaces, and Haskell-based backend collector code.
+    Back-end RRD writer for time-series power usage and environmental data
+    collected from distributed wireless probes.
  
 source-repository head
   type:             git

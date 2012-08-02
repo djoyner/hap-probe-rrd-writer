@@ -32,6 +32,9 @@ main = do
       configFile = case (lookup flConfig) args of
                      Just x -> x
                      Nothing -> error "Missing config file (-c)"
+      subscribe  = case (lookup flSubscribe) args of
+                     Just x -> x
+                     Nothing -> error "Missing subscribe address (-s)"
 
   -- Load the config file
   wc <- loadConfig configFile debug
@@ -39,7 +42,7 @@ main = do
   -- Everything runs in conduit ;)
   runResourceT $ 
     -- Source JSON-encoded probe messages (via ZeroMQ SUB socket)
-    (sourceBuffers $ T.unpack $ wcSubAddr wc) $=
+    (sourceBuffers subscribe) $=
     -- Print raw messages for debug
     (CL.mapM $ (\x -> liftIO (when (debug) $ B8.hPutStrLn IO.stderr x) >> return x)) $=
     -- Parse to values, discarding parse failures
@@ -78,14 +81,16 @@ argsMode =
   , modeHelp = "Home Automation Project: probe data writer"
   , modeGroupFlags = toGroup [
       flagNone [flDebug, "D"] (\v -> (flDebug, ""):v) "Enable debug output"
-    , flagReq [flConfig, "c"] (updateArg flConfig) "FILE" "Path to config file"
+    , flagReq [flConfig, "c"] (updateArg flConfig) "FILE" "Path to config FILE"
+    , flagReq [flSubscribe, "s"] (updateArg flSubscribe) "ADDRESS" "Sink data from ZeroMQ SUB socket connected to ADDRESS"
     , flagHelpSimple ((flHelp, ""):)
     ]
   }
   where
     updateArg fl x v = Right $ (fl, x):v
 
-flDebug    = "debug"
-flConfig   = "config"
-flHelp     = "help"
+flDebug     = "debug"
+flConfig    = "config"
+flSubscribe = "subscribe"
+flHelp      = "help"
 

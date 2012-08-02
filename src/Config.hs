@@ -16,7 +16,6 @@ import qualified Data.Text as T
 
 data WriterConfig = WriterConfig
   { wcDebug :: Bool
-  , wcSubAddr :: T.Text
   , wcProbes :: ProbeConfigMap } deriving Show
 
 type ProbeConfigMap = Map.HashMap T.Text ProbeConfig
@@ -42,7 +41,6 @@ loadConfig :: FilePath -> Bool -> IO WriterConfig
 loadConfig configFile debug = do
   c <- load [Required configFile]
   WriterConfig debug <$> 
-    require c "sub" <*>
     (require c "probes" >>= requireProbeConfigMap c)
 
 requireProbeConfigMap :: Config -> [T.Text] -> IO ProbeConfigMap
