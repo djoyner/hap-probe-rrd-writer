@@ -42,7 +42,7 @@ main = do
   -- Everything runs in conduit ;)
   runResourceT $ 
     -- Source JSON-encoded probe messages (via ZeroMQ SUB socket)
-    (sourceBuffers subscribe) $=
+    (sourceBuffers subscribe debug) $=
     -- Print raw messages for debug
     (CL.mapM $ (\x -> liftIO (when (debug) $ B8.hPutStrLn IO.stderr x) >> return x)) $=
     -- Parse to values, discarding parse failures

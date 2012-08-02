@@ -20,7 +20,7 @@ parseMessage = either (const []) (:[]) . parseOnly json
 
 getAddress :: Value -> Maybe T.Text
 getAddress (Object o) = HashMap.lookup "address" o >>= maybeString
-getAddress _          = Just "fuck" -- Nothing
+getAddress _          = Nothing
 
 getMessage :: Value -> Maybe Value
 getMessage (Object o) = HashMap.lookup "message" o
